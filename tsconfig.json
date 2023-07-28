@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "forceConsistentCasingInFileNames": true,
+        "newLine": "crlf",
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitReturns": true,
+        "noUnusedParameters": true,
+        "rootDir": "./src/",
+        "strict": true,
+        "declaration": true,
+        "module": "commonjs",
+        "outDir": "./lib/",
+        "skipLibCheck": true,
+        "skipDefaultLibCheck": true,
+        "target": "es2019"
+    },
+    "include": [
+        "src/"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

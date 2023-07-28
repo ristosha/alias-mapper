@@ -1,0 +1,26 @@
+{
+  "name": "alias-mapper",
+  "version": "1.0.0",
+  "description": "A small utility for mapping aliases in JavaScript objects",
+  "main": "./lib/mod.js",
+  "files": [
+    "./lib/mod.js"
+  ],
+  "exports": {
+    ".": "./lib/mod.js"
+  },
+  "type": "commonjs",
+  "scripts": {
+    "prepublishOnly": "deno task backport"
+  },
+  "keywords": [
+    "alias",
+    "mapper"
+  ],
+  "author": "Ristosha",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.4.5",
+    "typescript": "^5.1.6"
+  }
+}
