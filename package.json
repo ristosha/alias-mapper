@@ -4,7 +4,7 @@
   "description": "A small utility for mapping aliases in JavaScript objects",
   "main": "./lib/mod.js",
   "files": [
-    "./lib/mod.js",
+    "lib/",
     "LICENSE",
     "README.md",
     "package.json"
