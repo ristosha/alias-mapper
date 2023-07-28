@@ -4,7 +4,10 @@
   "description": "A small utility for mapping aliases in JavaScript objects",
   "main": "./lib/mod.js",
   "files": [
-    "./lib/mod.js"
+    "./lib/mod.js",
+    "LICENSE",
+    "README.md",
+    "package.json"
   ],
   "exports": {
     ".": "./lib/mod.js"
@@ -17,6 +20,10 @@
     "alias",
     "mapper"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ristosha/alias-mapper"
+  },
   "author": "Ristosha",
   "license": "MIT",
   "devDependencies": {
