@@ -1,6 +1,6 @@
 {
   "name": "alias-mapper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A small utility for mapping aliases in JavaScript objects",
   "main": "./lib/mod.js",
   "files": [
