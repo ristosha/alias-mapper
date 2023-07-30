@@ -28,6 +28,31 @@ const source = {
 const result = build(source) // -> { x: 'center', y: 'middle' }
 ```
 
+You can also compute a value with compositeAliases using `_compute`.
+In a single alias, normal key-values can be used together with `_compute`,
+but note that `_compute` is executed after the entire map has been computed.
+This way you can target the already generated static mapping results in your computation function.
+
+```typescript
+const comp = compositeAliases({
+  color: {
+    _aliases: ['c'],
+    _compute: (value, context) => { // parse colors like '#ff0000' or 'rgb(255, 0, 0)'
+      if (value.startsWith('rgb(')) {
+        const [r, g, b] = value.slice(4, -1).split(',').map(Number)
+        return { color: { r, g, b } }
+      } else if (value.startsWith('#')) {
+        const r = parseInt(value.slice(1, 3), 16)
+        const g = parseInt(value.slice(3, 5), 16)
+        const b = parseInt(value.slice(5, 7), 16)
+        return { color: { r, g, b } }
+      }
+    }
+  }
+})
+
+comp.build({ c: '#ff0000' }) // -> { color: { r: 255, g: 0, b: 0 }}
+```
 
 
 #### Key-Value Aliases

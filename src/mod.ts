@@ -1,3 +1,19 @@
+type MaybePromise<T> = PromiseLike<T> | T
+
+export type CompositeAliasMapFunction<T = any> =
+  (value: any, context: Readonly<Record<string, any>>) =>
+    MaybePromise<{[K in keyof T | string]?: K extends keyof T ? T[K] : any}>
+
+export type CompositeAliasMapValue<T> = {
+  [K in keyof T | '_aliases' | '_compute']?: K extends '_aliases'
+    ? string[]
+    : K extends '_compute'
+      ? CompositeAliasMapFunction<T>
+      : K extends keyof T
+        ? T[K]
+        : never
+}
+
 /**
  * Type for a composite alias map.
  *
@@ -20,9 +36,7 @@
  *    }
  * }
  * */
-export type CompositeAliasMap<T = any> = Record<string, {
-  [K in keyof T | '_aliases']?: K extends keyof T ? T[K] : K extends '_aliases' ? string[] : never;
-}>
+export type CompositeAliasMap<T = any> = Record<string, CompositeAliasMapValue<T>>
 /**
  * Type for a composite alias map.
  *
@@ -51,12 +65,12 @@ export type KeyValueAliasMap<T = any> = {
   }
 }
 
-export type CachedMapBuildFunction<T> = (obj: any) => T extends CompositeAliasMap<infer U> | KeyValueAliasMap<infer U> ? U : never
+export type CachedMapBuildFunction = (obj: Record<string, any>) => Record<string, any>// T extends CompositeAliasMap<infer U> | KeyValueAliasMap<infer U> ? U : any
 
 export interface MapWithCachedKeys<T extends CompositeAliasMap | KeyValueAliasMap> {
   map: T
   keyCache: Map<string, string>
-  build: CachedMapBuildFunction<T>
+  build: CachedMapBuildFunction
 }
 
 export interface CachedMap<T extends CompositeAliasMap | KeyValueAliasMap> extends MapWithCachedKeys<T> {
@@ -79,7 +93,7 @@ export interface CachedMap<T extends CompositeAliasMap | KeyValueAliasMap> exten
  * // cache = Map(2) { 'name' => 'name', 'n' => 'name' }
  * ```
  */
-function cacheKeyAliases (map: KeyValueAliasMap | CompositeAliasMap) {
+export function cacheKeyAliases (map: KeyValueAliasMap | CompositeAliasMap) {
   const cached = new Map<string, string>()
   // @ts-expect-error false error
   for (const [key, { _aliases: aliases }] of Object.entries(map)) {
@@ -113,7 +127,7 @@ function cacheKeyAliases (map: KeyValueAliasMap | CompositeAliasMap) {
  * // }
  * ```
  */
-function cacheValueAliases (map: KeyValueAliasMap) {
+export function cacheValueAliases (map: KeyValueAliasMap) {
   const valueAliasesMap = new Map<string, Map<string, string>>()
   for (const [key, opts] of Object.entries(map)) {
     if (opts == null) continue
@@ -155,12 +169,13 @@ function cacheValueAliases (map: KeyValueAliasMap) {
  * // result = { status: 'active' }
  * ```
  */
-function applyCompositeAliases (
+export function applyCompositeAliases (
   source: Record<string, any>,
   aliasMap: CompositeAliasMap,
   keyAliasCache = cacheKeyAliases(aliasMap)
 ): any {
   const result: Record<string, any> = {}
+  const computeFunctions: [CompositeAliasMapFunction, any][] = []
   for (const [sourceKey, sourceValue] of Object.entries(source)) {
     const destKey = keyAliasCache.get(sourceKey)
     if (destKey == null) {
@@ -168,13 +183,24 @@ function applyCompositeAliases (
       continue
     }
 
+    const { _aliases, _compute, ...destMappings } = aliasMap[destKey]
+    if (_compute != null && typeof _compute === 'function') {
+      computeFunctions.push([_compute, sourceValue])
+    }
+
     if (!(typeof sourceValue === 'boolean' && sourceValue)) {
       continue
     }
 
-    const { _aliases, ...destMappings } = aliasMap[destKey]
     for (const [mappedKey, mappedValue] of Object.entries(destMappings)) {
       result[mappedKey] = mappedValue
+    }
+  }
+
+  if (computeFunctions.length > 0) {
+    for (const [computeFunction, sourceValue] of computeFunctions) {
+      const computedValues = computeFunction(sourceValue, result);
+      Object.assign(result, computedValues);
     }
   }
 
