@@ -47,6 +47,7 @@ const comp = compositeAliases({
         const b = parseInt(value.slice(5, 7), 16)
         return { color: { r, g, b } }
       }
+      return {}
     }
   }
 })
