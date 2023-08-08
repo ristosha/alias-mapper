@@ -140,7 +140,7 @@ const result = kv.build({ value: '5' })
   value: 5
 }
 
-const result2 = kv.build({ value: 'reset '})
+const result2 = kv.build({ value: 'reset' })
 {
   value: 0
 }
