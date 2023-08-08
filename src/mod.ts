@@ -2,7 +2,7 @@ type MaybePromise<T> = PromiseLike<T> | T
 
 export type CompositeAliasMapFunction<T = any> =
   (value: any, context: Readonly<Record<string, any>>) =>
-    MaybePromise<{[K in keyof T | string]?: K extends keyof T ? T[K] : any}>
+    MaybePromise<{ [K in keyof T | string]?: K extends keyof T ? T[K] : any }>
 
 export type CompositeAliasMapValue<T> = {
   [K in keyof T | '_aliases' | '_compute']?: K extends '_aliases'
@@ -59,11 +59,20 @@ export type CompositeAliasMap<T = any> = Record<string, CompositeAliasMapValue<T
  *   }
  * }
  * */
+type NumberKeys = { [K in number]: K };
+
 export type KeyValueAliasMap<T = any> = {
-  [K in keyof T]?: {
-    [V in Extract<T[K], string> | '_aliases']?: string[]
-  }
+  [K in keyof T]?: T[K] extends boolean
+    ? { true?: string[]; false?: string[]; _aliases?: string[]; _castTo?: 'boolean' }
+    : T[K] extends number
+      ? { [V in keyof NumberKeys | '_aliases' | '_castTo']?: V extends '_castTo' ? 'number' : string[] }
+      : {
+        [V in Extract<T[K], string> | '_aliases' | '_castTo']?: V extends '_castTo'
+          ? 'boolean' | 'number'
+          : string[]
+      }
 }
+
 
 export type CachedMapBuildFunction = (obj: Record<string, any>) => Record<string, any>// T extends CompositeAliasMap<infer U> | KeyValueAliasMap<infer U> ? U : any
 
@@ -199,8 +208,8 @@ export function applyCompositeAliases (
 
   if (computeFunctions.length > 0) {
     for (const [computeFunction, sourceValue] of computeFunctions) {
-      const computedValues = computeFunction(sourceValue, result);
-      Object.assign(result, computedValues);
+      const computedValues = computeFunction(sourceValue, result)
+      Object.assign(result, computedValues)
     }
   }
 
@@ -242,6 +251,17 @@ export function compositeAliases<T> (map: CompositeAliasMap<T>): MapWithCachedKe
   return result
 }
 
+function castValue(value: any, castTo: 'boolean' | 'number'): string | boolean | number | undefined {
+  let castedValue: string | boolean | number | undefined = value
+  if (castTo === 'boolean') {
+    castedValue = value.toLowerCase() === 'true' || String(value) === '1'
+  } else if (castTo === 'number') {
+    castedValue = Number(value)
+  }
+  return castedValue
+}
+
+
 /**
  * Applies key-value aliases to the provided source object using the given alias map and caches.
  *
@@ -276,7 +296,13 @@ export function applyKeyValueAliases (
       continue
     }
 
-    const destValue = valueAliasCache.get(destKey)?.get(value)
+    const castTo = aliasMap[destKey]?._castTo as 'number' | 'boolean' | undefined
+    let destValue: string | boolean | number | undefined = valueAliasCache.get(destKey)?.get(value)
+    if (castTo != null) {
+      if (destValue != null) destValue = castValue(destValue, castTo)
+      else destValue = castValue(value, castTo)
+    }
+
     result[destKey] = destValue ?? value
   }
 
